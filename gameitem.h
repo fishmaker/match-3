@@ -22,13 +22,15 @@ public:
 public:
     explicit GameItem();
     explicit GameItem(int value);
+    explicit GameItem(const GameItem & cpy);
+    GameItem& operator=(const GameItem & cpy);
     ~GameItem();
 
     int getItemType() const;
     void setItemType(const int &ItemType);
 
     const QString getImagePath() const;
-    void setImagePath(const QString * ImagePath);
+    void updateImagePath();
 
 private:
     int m_ItemType;

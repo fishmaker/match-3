@@ -14,11 +14,11 @@ GameTable::GameTable(QObject *parent)
     m_GameScore = 0;
 
     for (int i = 0; i < TOTAL; ++i) {
+        //m_Items << std::shared_ptr<GameItem>(new GameItem(qrand() % GameItem::HIGH_INDEX));
         m_Items << std::shared_ptr<GameItem>(new GameItem(qrand() % GameItem::HIGH_INDEX));
     }
 
     clearSelectedPoints();
-
 }
 
 GameTable::~GameTable()
@@ -78,8 +78,12 @@ int GameTable::checkAllMap()
 
     for (auto it = m_Marked.cbegin(); it != m_Marked.cend(); ++it) {
         deleteMarked(*it);
+    }
+    for (auto it = m_Marked.cbegin(); it != m_Marked.cend(); ++it) {
         appendItem(*it);
     }
+
+    emit dataChanged(createIndex(GameTable::ROWS, 0), createIndex(GameTable::TOTAL - GameTable::ROWS + 1, 0));
 
     res = m_Marked.size();
     updateScore(res);
@@ -90,15 +94,15 @@ int GameTable::checkAllMap()
 
 void GameTable::handleMouse(int index)
 {
-    qInfo() << "index is = " << index;
+    //qInfo() << "index is = " << index;
 
     if (index < 0 || index >= GameTable::TOTAL) {
-        qWarning() << "Index out of bounds!";
+        //qWarning() << "Index out of bounds!";
         return;
     }
 
     if (index % 18 >= GameTable::VROWS) {
-        qInfo() << "Disabled for this area";
+        //qInfo() << "Disabled for this area";
         return;
     }
 
@@ -107,10 +111,10 @@ void GameTable::handleMouse(int index)
     row = index % 18;
     col = index / 18;
 
-    qInfo() << "row = " << row << "col = " << col;
+    //qInfo() << "row = " << row << "col = " << col;
 
     if (m_First.row == -1) {
-        qInfo() << "first candidate";
+        //qInfo() << "first candidate";
         m_First.row = row;
         m_First.col = col;
         m_First.index = index;
@@ -118,7 +122,7 @@ void GameTable::handleMouse(int index)
     }
 
     if (m_First.row == row && m_First.col == col) {
-        qInfo() << "Та же точка";
+        //qInfo() << "Та же точка";
         clearSelectedPoints();
         return;
     }
@@ -132,15 +136,14 @@ void GameTable::handleMouse(int index)
         return;
     }
 
-    qInfo() << "We found second candidate";
+    //qInfo() << "We found second candidate";
     m_Second.row = row;
     m_Second.col = col;
     m_Second.index = index;
 
     swapPoints();
     if (!checkAllMap()) {
-        // backswap
-        swapPoints();
+
     }
 
     clearSelectedPoints();
@@ -155,54 +158,53 @@ void GameTable::clearSelectedPoints()
 
 void GameTable::swapPoints()
 {
+
     if (m_First.row < m_Second.row) {
         //qInfo() << "m_Second выше, чем m_First";
-
         beginMoveRows(QModelIndex(), m_First.index, m_First.index, QModelIndex(), m_Second.index + 1);
+        vectorSwap(m_First.index, m_Second.index);
         endMoveRows();
-
-        goto g_swap;
+        return;
     }
 
     if (m_First.row > m_Second.row) {
         //qInfo() << "m_First выше, чем m_Second";
-
         beginMoveRows(QModelIndex(), m_Second.index, m_Second.index, QModelIndex(), m_First.index + 1);
+        vectorSwap(m_First.index, m_Second.index);
         endMoveRows();
-
-        goto g_swap;
+        return;
     }
 
     // Дальше, если m_First.row == m_Second.row (на одном уровне)
 
     if (m_First.col < m_Second.col) {
         //qInfo() << "m_First левее m_Second";
-
         beginMoveRows(QModelIndex(), m_First.index, m_First.index, QModelIndex(), m_Second.index + 1);
         endMoveRows();
 
         beginMoveRows(QModelIndex(), m_Second.index - 1, m_Second.index - 1, QModelIndex(), m_First.index);
+        vectorSwap(m_First.index, m_Second.index);
         endMoveRows();
-
-        goto g_swap;
+        return;
     }
 
     if (m_First.col > m_Second.col) {
         //qInfo() << "m_First правее m_Second";
-
         beginMoveRows(QModelIndex(), m_Second.index, m_Second.index, QModelIndex(), m_First.index + 1);
         endMoveRows();
 
         beginMoveRows(QModelIndex(), m_First.index - 1, m_First.index - 1, QModelIndex(), m_Second.index);
+        vectorSwap(m_First.index, m_Second.index);
         endMoveRows();
-
-        goto g_swap;
+        return;
     }
+}
 
-    qWarning() << "[W] - unknown situation";
-
-g_swap:
-    qSwap(m_Items[m_First.index], m_Items[m_Second.index]);
+void GameTable::vectorSwap(int i, int j)
+{
+    std::shared_ptr<GameItem> tmp = m_Items[i];
+    m_Items.replace(i, m_Items[j]);
+    m_Items.replace(j, tmp);
 }
 
 int GameTable::getFirst()
@@ -217,12 +219,17 @@ int GameTable::getSecond()
 
 int GameTable::checkRow(int rowNumber)
 {
-    int count = 1;
-    int offset = rowNumber * GameTable::ROWS;
+
+}
+
+int GameTable::checkColumn(int columnNumber)
+{
+    int count = 0;
+    int offset = columnNumber * GameTable::ROWS;
     int begin = offset;
     int current = m_Items[offset]->getItemType();
 
-    for (int i = 1; i < GameTable::VROWS; ++i) {
+    for (int i = 0; i < GameTable::VROWS; ++i) {
         if (current == m_Items[offset + i]->getItemType()) {
             ++count;
         } else {
@@ -233,23 +240,13 @@ int GameTable::checkRow(int rowNumber)
 
         if (count == 3) {
             for (int j = 0; j < 3; ++j)
-                m_Marked.insert(begin + j);
+                m_Marked << begin;
         }
 
         if (count > 3) {
-            m_Marked.insert(begin + i);
+            m_Marked << begin;
         }
     }
-}
-
-int GameTable::checkColumn(int columnNumber)
-{
-
-}
-
-void GameTable::handleDeletedNodes()
-{
-
 }
 
 void GameTable::deleteMarked(int index)
@@ -261,12 +258,10 @@ void GameTable::deleteMarked(int index)
 
 void GameTable::appendItem(int index)
 {
-    int position = index / GameTable::ROWS + GameTable::VROWS;
+    int position = index + GameTable::VROWS;
     beginInsertRows(QModelIndex(), position, position);
     m_Items.insert(position, std::shared_ptr<GameItem>(new GameItem(qrand() % GameItem::HIGH_INDEX)));
     endInsertRows();
-
-    emit dataChanged(createIndex(GameTable::ROWS, 0), createIndex(GameTable::TOTAL - GameTable::ROWS + 1, 0));
 }
 
 void GameTable::updateScore(int count)

@@ -16,16 +16,21 @@ GameItem::GameItem()
 GameItem::GameItem(int value)
 {
     m_ItemType = value;
+    updateImagePath();
+}
 
-    switch (value) {
-    case 0: m_ImagePath = &GameItem::IMG_CLOCK; break;
-    case 1: m_ImagePath = &GameItem::IMG_COAL; break;
-    case 2: m_ImagePath = &GameItem::IMG_DIAMOND; break;
-    case 3: m_ImagePath = &GameItem::IMG_PICTURE; break;
-    case 4: m_ImagePath = &GameItem::IMG_HOME; break;
-    default:
-        qWarning() << "GameItem::GameItem() - wrong value!";
-    }
+GameItem::GameItem(const GameItem &cpy)
+{
+    m_ItemType = cpy.getItemType();
+    updateImagePath();
+}
+
+GameItem& GameItem::operator=(const GameItem &cpy)
+{
+    m_ItemType = cpy.getItemType();
+    updateImagePath();
+
+    return *this;
 }
 
 GameItem::~GameItem()
@@ -54,10 +59,15 @@ const QString GameItem::getImagePath() const
     return *m_ImagePath;
 }
 
-void GameItem::setImagePath(const QString * ImagePath)
+void GameItem::updateImagePath()
 {
-    qInfo() << Q_FUNC_INFO;
-
-    m_ImagePath = ImagePath;
+    switch (m_ItemType) {
+    case 0: m_ImagePath = &GameItem::IMG_CLOCK; break;
+    case 1: m_ImagePath = &GameItem::IMG_COAL; break;
+    case 2: m_ImagePath = &GameItem::IMG_DIAMOND; break;
+    case 3: m_ImagePath = &GameItem::IMG_PICTURE; break;
+    case 4: m_ImagePath = &GameItem::IMG_HOME; break;
+    default:
+        qWarning() << "GameItem::GameItem() - wrong value!";
+    }
 }
-

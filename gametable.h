@@ -8,7 +8,6 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <set>
 
 #include <gameitem.h>
 
@@ -27,7 +26,7 @@ class GameTable : public QAbstractListModel
 
     static const int ROWS = 18;             // total rows
     static const int VROWS = 9;             // visible rows
-    static const int COLS = 1;              // columns (TODO: ~ width)
+    static const int COLS = 9;              // columns (TODO: ~ width)
     static const int TOTAL = ROWS * COLS;   // total items in the grid
 
     Q_PROPERTY(int first READ getFirst())
@@ -76,13 +75,16 @@ public:
 
 private:
     void clearSelectedPoints();
+
     void swapPoints();
+    void vectorSwap(int i, int j);
+
     int getFirst();
     int getSecond();
 
     int checkRow(int rowNumber);
     int checkColumn(int columnNumber);
-    void handleDeletedNodes();
+
     void deleteMarked(int index);
     void appendItem(int index);
     void updateScore(int count);
@@ -94,7 +96,7 @@ public slots:
 
 private:
     QList<std::shared_ptr<GameItem>> m_Items;
-    std::set<int> m_Marked;
+    QList<int> m_Marked;
 
     Point m_First;
     Point m_Second;
